@@ -10,6 +10,8 @@ from flask_jwt_extended import (
     get_jwt,
 )
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import timedelta, datetime
 from functools import wraps
@@ -21,7 +23,15 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-app = Flask(__name__, instance_path="/tmp")
+app = Flask(__name__, instance_path="/tmp")  # for vercel only
+# app = Flask(__name__)
+
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["100 per day", "30 per hour"],
+    storage_uri="memory://",
+)
 
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
     "DATABASE_URL", "sqlite:///admin_dashboard.db"
@@ -423,7 +433,8 @@ def init_db():
         print("Database initialized with default users:")
 
 
-init_db()
-#if __name__ == "__main__":
-    
+init_db()  # only for vercel
+
+# if __name__ == "__main__":
+#    init_db()
 #    app.run(debug=True, port=5000)

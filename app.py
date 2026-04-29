@@ -423,6 +423,7 @@ def init_db():
         print("Database initialized with default users:")
 
 
-if __name__ == "__main__":
-    init_db()
+init_db()
+#if __name__ == "__main__":
+    
 #    app.run(debug=True, port=5000)

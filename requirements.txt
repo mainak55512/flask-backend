@@ -3,7 +3,5 @@ flask-sqlalchemy==3.1.1
 flask-jwt-extended==4.6.0
 flask-cors==4.0.1
 werkzeug==3.0.3
-flask
-langchain-groq
-langchain-core
-python-dotenv
+langchain-groq==1.1.2
+python-dotenv==1.2.2

@@ -220,6 +220,8 @@ def me():
     return jsonify(user.to_dict())
 
 
+# Dashboard route
+# ---------------
 @app.route("/api/dashboard/stats", methods=["GET"])
 @jwt_required()
 def dashboard_stats():
@@ -238,6 +240,8 @@ def dashboard_stats():
     )
 
 
+# User routes
+# -----------
 @app.route("/api/users", methods=["GET"])
 @jwt_required()
 def get_users():
@@ -325,8 +329,61 @@ def get_roles():
     return jsonify([r.to_dict() for r in roles])
 
 
+# Errors
+# -------
+@app.errorhandler(404)
+def not_found(e):
+    return jsonify({"error": "Resource not found"}), 404
+
+
+@app.errorhandler(405)
+def method_not_allowed(e):
+    return jsonify({"error": "Method not allowed"}), 405
+
+
+@app.errorhandler(500)
+def internal_error(e):
+    return jsonify({"error": "Internal server error"}), 500
+
+
+# DB Initialization
+# -----------------
+def init_db():
+    with app.app_context():
+        db.create_all()
+
+        for role_name in ["Admin", "Viewer"]:
+            if not Role.query.filter_by(name=role_name).first():
+                db.session.add(Role(name=role_name))
+        db.session.commit()
+
+        # default admin user
+        if not User.query.filter_by(username="admin").first():
+            admin_role = Role.query.filter_by(name="Admin").first()
+            admin = User(username="admin", email="admin@example.com", role=admin_role)
+            admin.set_password("admin123")
+            db.session.add(admin)
+
+        # default viewer user
+        if not User.query.filter_by(username="viewer").first():
+            viewer_role = Role.query.filter_by(name="Viewer").first()
+            viewer = User(
+                username="viewer", email="viewer@example.com", role=viewer_role
+            )
+            viewer.set_password("viewer123")
+            db.session.add(viewer)
+
+        db.session.commit()
+        print("Database initialized with default users:")
+
+
+init_db()  # only for vercel
+
+
+# Extra Senario Specific Routes will go here
+# -------------------------------------------
 @app.route("/api/gen-comment", methods=["POST"])
-# @jwt_required()
+@jwt_required()
 def get_ai_comments():
     payload = request.get_json(silent=True) or {}
     payload_body = json.loads(payload["body"])
@@ -386,54 +443,6 @@ Output format:
 
     return {"ok": True, "status": 200, "data": response.content}
 
-
-@app.errorhandler(404)
-def not_found(e):
-    return jsonify({"error": "Resource not found"}), 404
-
-
-@app.errorhandler(405)
-def method_not_allowed(e):
-    return jsonify({"error": "Method not allowed"}), 405
-
-
-@app.errorhandler(500)
-def internal_error(e):
-    return jsonify({"error": "Internal server error"}), 500
-
-
-# DB Initialization
-# -----------------
-def init_db():
-    with app.app_context():
-        db.create_all()
-
-        for role_name in ["Admin", "Viewer"]:
-            if not Role.query.filter_by(name=role_name).first():
-                db.session.add(Role(name=role_name))
-        db.session.commit()
-
-        # default admin user
-        if not User.query.filter_by(username="admin").first():
-            admin_role = Role.query.filter_by(name="Admin").first()
-            admin = User(username="admin", email="admin@example.com", role=admin_role)
-            admin.set_password("admin123")
-            db.session.add(admin)
-
-        # default viewer user
-        if not User.query.filter_by(username="viewer").first():
-            viewer_role = Role.query.filter_by(name="Viewer").first()
-            viewer = User(
-                username="viewer", email="viewer@example.com", role=viewer_role
-            )
-            viewer.set_password("viewer123")
-            db.session.add(viewer)
-
-        db.session.commit()
-        print("Database initialized with default users:")
-
-
-init_db()  # only for vercel
 
 # if __name__ == "__main__":
 #    init_db()
